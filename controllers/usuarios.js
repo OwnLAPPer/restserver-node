@@ -1,43 +1,63 @@
 const { response,request } = require("express");
+const bcryptjs = require("bcryptjs");
+const Usuario=require("../models/usuario");
 
-const usuariosGet = (req=request,res= response)=>{
 
-    const {q,nombre = " no name",apikey}= req.query;
+const usuariosGet = async (req=request,res= response)=>{
+    const {limite = 5, desde =0}=req.query;
+    const query = {estado:true};
 
-    res.json({
-        msg: "get API - controlador",
-        q,
-        nombre,
-        apikey
-    });
+    const [total,usuarios]= await Promise.all([
+        Usuario.countDocuments(query),
+        Usuario.find(query)
+            .skip(Number(desde))
+            .limit(Number(limite))
+    ]);
+    res.json({total,usuarios});
 }
 
-const usuariosPut = (req,res)=>{
+const usuariosPut = async (req,res)=>{
 
     const {id}= req.params;
+    const {_id,password,google,correo,...resto}=req.body;
+    //validar contra base de datos
+    if (password) {
+        //encriptar
+        const salt = bcryptjs.genSaltSync();
+        resto.password=bcryptjs.hashSync(password,salt); 
+    }
+    //busco en los usuarios por (id) y actualizo la data (resto)
+    const usuario= await Usuario.findByIdAndUpdate(id,resto);
+
+    res.json({usuario});
+}
+
+const usuariosPost =  async (req,res)=>{
+
+    const {nombre,correo,password,rol} = req.body;
+    const usuario= new Usuario( {nombre,correo,password,rol});
+
+    //encriptar la contraseña
+    const salt = bcryptjs.genSaltSync();
+    usuario.password=bcryptjs.hashSync(password,salt);
+
+    //guardar en base de datos
+    await usuario.save();
 
     res.json({
-        msg: "put API - controlador",
-        id
+        usuario
     });
 }
 
-const usuariosPost = (req,res)=>{
+const usuariosDelete = async (req,res)=>{
+    const {id}=req.params;
+    const query = {estado:false};
+    //fisicamente lo borramos
+    //const usuario= await Usuario.findByIdAndDelete(id);
 
-    const {nombre,edad} = req.body;
-
-
-    res.json({
-        msg: "post API - controlador",
-        nombre,
-        edad
-    });
-}
-
-const usuariosDelete = (req,res)=>{
-    res.json({
-        msg: "delete API - controlador"
-    });
+    //cambiar registro modo correcto sin eliminar
+    const usuario = await Usuario.findByIdAndUpdate(id,query)
+    res.json({usuario});
 }
 
 const usuariosPatch = (req,res)=>{
