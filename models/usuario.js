@@ -35,7 +35,8 @@ const usuarioSchema=Schema({
 
 //no mostrar constraseña ni la version
 usuarioSchema.methods.toJSON=function(){
-    const {__v,password,...usuario}=this.toObject();
+    const {__v,password,_id,...usuario}=this.toObject();
+    usuario.uid=_id;
     return usuario;
 }
 

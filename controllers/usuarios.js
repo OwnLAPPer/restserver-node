@@ -52,12 +52,11 @@ const usuariosPost =  async (req,res)=>{
 const usuariosDelete = async (req,res)=>{
     const {id}=req.params;
     const query = {estado:false};
-    //fisicamente lo borramos
-    //const usuario= await Usuario.findByIdAndDelete(id);
-
+    const usuarioAutenticado=req.usuario;
+    
     //cambiar registro modo correcto sin eliminar
     const usuario = await Usuario.findByIdAndUpdate(id,query)
-    res.json({usuario});
+    res.json({usuario,usuarioAutenticado});
 }
 
 const usuariosPatch = (req,res)=>{
